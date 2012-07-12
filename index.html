@@ -11,8 +11,8 @@
             var camera, scene, renderer, container, geometry, material, mesh,
                 radius, rotationSpeed, height, width;
             var old_scale, old_volume;
-            var current_time = new Date();
             var volumes = new Volumes;
+            var pair_names = [ "AUD_CAD","AUD_CHF","AUD_HKD","AUD_JPY","AUD_NZD","AUD_SGD","AUD_USD","CAD_CHF","CAD_HKD","CAD_JPY","CAD_SGD","CHF_HKD","CHF_JPY","CHF_ZAR","EUR_AUD","EUR_CAD","EUR_CHF","EUR_CZK","EUR_DKK","EUR_GBP","EUR_HKD","EUR_HUF","EUR_JPY","EUR_NOK","EUR_NZD","EUR_PLN","EUR_SEK","EUR_SGD","EUR_TRY","EUR_USD","EUR_ZAR","GBP_AUD","GBP_CAD","GBP_CHF","GBP_HKD","GBP_JPY","GBP_NZD","GBP_PLN","GBP_SGD","GBP_USD","GBP_ZAR","HKD_JPY","NZD_CAD","NZD_CHF","NZD_HKD","NZD_JPY","NZD_SGD","NZD_USD","SGD_CHF","SGD_HKD","SGD_JPY","TRY_JPY","USD_CAD","USD_CHF","USD_CNY","USD_CZK","USD_DKK","USD_HKD","USD_HUF","USD_INR","USD_JPY","USD_MXN","USD_NOK","USD_PLN","USD_SAR","USD_SEK","USD_SGD","USD_THB","USD_TRY","USD_TWD","USD_ZAR","XAG_AUD","XAG_CAD","XAG_CHF","XAG_EUR","XAG_GBP","XAG_HKD","XAG_JPY","XAG_NZD","XAG_SGD","XAG_USD","XAU_AUD","XAU_CAD","XAU_CHF","XAU_EUR","XAU_GBP","XAU_HKD","XAU_JPY","XAU_NZD","XAU_SGD","XAU_USD","XAU_XAG","XPD_USD","XPT_USD","ZAR_JPY" ];
             var currency_pairs = {
                 "AUD_CAD": { "color": "CD5C5C", "render": true, "mesh": "" },
                 "AUD_CHF": { "color": "F08080", "render": true, "mesh": "" },
@@ -108,7 +108,8 @@
                 "XAU_XAG": { "color": "F4DEAD", "render": true, "mesh": "" },
                 "XPD_USD": { "color": "F6E4C4", "render": true, "mesh": "" },
                 "XPT_USD": { "color": "F8EBCD", "render": true, "mesh": "" },
-                "ZAR_JPY": { "color": "FAF8DC", "render": true, "mesh": "" }
+                "ZAR_JPY": { "color": "FAF8DC", "render": true, "mesh": "" },
+                "Total":   { "color": "999999", "render": true, "mesh": "" }
             };
     
             function init() {
@@ -119,8 +120,8 @@
                 camera.position.z = 1000;
                 scene.add( camera );
     
-                var x = -700;
-                var z = -700;
+                var x = -720;
+                var z = -560;
                 for ( var i in currency_pairs ) {
                     geometry = new THREE.CubeGeometry( 100, 10, 100 );
                     material = new THREE.MeshBasicMaterial({
@@ -130,11 +131,11 @@
                     });
                     mesh = new THREE.Mesh( geometry, material );
                     mesh.position = { "x": x, "y": 0, "z": z };
-                    if ( x < 700 ) {
+                    if ( x < 720 ) {
                         x += 140;
                     }
                     else {
-                        x = -700;
+                        x = -720;
                         z += 140;
                     }
                     scene.add( mesh );
@@ -187,18 +188,12 @@
             }
         
             function animate() {
-                var new_time = new Date();
-                var current_seconds = parseInt(current_time.getTime() / 1000);
-                var new_seconds = parseInt(new_time.getTime() / 1000);
-    
-                if ( typeof(old_volume) !== "object"  || new_seconds > current_seconds) {
-                    old_volume = volumes.get_volume();
-                    if ( new_seconds > current_seconds ) {
-                        current_time = new_time;
-                    }
+                var new_volume = volumes.get_volume();
+                if ( old_volume !== new_volume ) {
+                    old_volume = new_volume;
                 }
                 for ( var i in old_volume ) {
-                    var pair =  currency_pairs[old_volume[i][0]];
+                    var pair = currency_pairs[old_volume[i][0]];
                     var old_scale = pair.old_scale;
                     var current_scale = pair.mesh.scale.y;
                     var new_scale = volume_to_scale(old_volume[i][1]);
@@ -237,7 +232,8 @@
                     controls.screen.height = height;
                     camera.radius = ( width + height ) / 4;
             };
-            function render(current_mesh, scale) {
+            function render() {
+                var total = 0;
                 for ( i in currency_pairs ) {
                     var pair = currency_pairs[i];
                     if ( pair.render ) {
@@ -246,7 +242,8 @@
                             pair.color_temp = '';
                         }
                         if ( pair.new_scale && pair.new_scale !== pair.mesh.scale.y ) {
-                            currency_pairs[i].mesh.scale.y = currency_pairs[i].new_scale;
+                            pair.mesh.scale.y = pair.new_scale;
+                            total += pair.new_scale;
                         }
                     }
                     else {
@@ -258,6 +255,9 @@
                             pair.mesh.material.color = { r: .3, g: .3, b: .3 };
                             pair.mesh.scale.y = 1;
                         }
+                    }
+                    if ( total ) {
+                        currency_pairs.Total.new_scale = total;
                     }
                 }
                 controls.update();
@@ -279,135 +279,30 @@
             }
     
             function Volumes() {
-                this.current_volume = 0;
-                this.all_volumes = [
-                    [
-                        ["EUR_USD", 53926],
-                        ["USD_CAD", 65961],
-                        ["AUD_CAD", 61851],
-                        ["GBP_CAD", 44098],
-                        ["GBP_CAD", 43839],
-                    ],
-                    [
-                        ["EUR_USD", 23292],
-                        ["USD_HKD", 56582],
-                        ["XAG_CAD", 90371],
-                    ],
-                    [
-                        ["EUR_USD", 67929],
-                        ["GBP_AUD", 51753],
-                        ["AUD_USD", 43226],
-                        ["EUR_HKD", 47791],
-                        ["GBP_CHF", 43689],
-                        ["NZD_CAD", 55484],
-                        ["NZD_HKD", 57833],
-                        ["USD_MXN", 7467],
-                    ],
-                    [
-                        ["EUR_USD", 95152],
-                        ["GBP_CHF", 60822],
-                        ["USD_MXN", 56523],
-                        ["USD_ZAR", 64868],
-                        ["XAG_USD", 71073],
-                        ["XAU_JPY", 40221],
-                        ["XPD_USD", 26394],
-                        ["USD_PLN", 104445],
-                        ["AUD_USD", 16783],
-                        ["GBP_ZAR", 13634],
-                        ["CHF_ZAR", 59767],
-                    ],
-                    [
-                        ["EUR_USD", 71128],
-                        ["USD_HKD", 81139],
-                        ["EUR_HKD", 56548],
-                        ["USD_MXN", 68161],
-                        ["USD_ZAR", 73472],
-                        ["XAG_USD", 106826],
-                        ["XAU_JPY", 16393],
-                        ["XPD_USD", 17329],
-                        ["USD_PLN", 30292],
-                        ["GBP_ZAR", 37114],
-                        ["CHF_ZAR", 70692],
-                    ],
-                    [
-                        ["EUR_USD", 45302],
-                        ["GBP_CHF", 108018],
-                        ["NZD_HKD", 107995],
-                        ["USD_MXN", 11456],
-                        ["USD_ZAR", 13720],
-                        ["XAG_USD", 97638],
-                        ["XAU_JPY", 23537],
-                        ["GBP_AUD", 47911],
-                        ["XPD_USD", 76787],
-                        ["USD_PLN", 9579],
-                        ["GBP_ZAR", 98873],
-                        ["CHF_ZAR", 103584],
-                        ["EUR_CZK", 106241],
-                        ["EUR_NOK", 108680],
-                        ["USD_HKD", 57050],
-                        ["NZD_SGD", 19844],
-                        ["TRY_JPY", 80153],
-                        ["AUD_CHF", 108894],
-                        ["EUR_PLN", 83643],
-                        ["GBP_PLN", 109615],
-                    ],
-                    [
-                        ["EUR_USD", 56270],
-                        ["EUR_HKD", 90390],
-                        ["NZD_HKD", 47819],
-                        ["USD_MXN", 92213],
-                        ["USD_ZAR", 34622],
-                        ["XAG_USD", 4745],
-                        ["XAU_JPY", 84196],
-                        ["XPD_USD", 47158],
-                        ["AUD_USD", 30161],
-                        ["USD_PLN", 76354],
-                        ["USD_HKD", 60025],
-                        ["GBP_ZAR", 83855],
-                        ["CHF_ZAR", 109089],
-                        ["EUR_CZK", 36981],
-                        ["EUR_NOK", 11901],
-                        ["NZD_SGD", 87512],
-                        ["TRY_JPY", 64831],
-                        ["AUD_CHF", 65100],
-                        ["EUR_PLN", 32230],
-                    ],
-                    [
-                        ["EUR_USD", 83125],
-                        ["USD_MXN", 42030],
-                        ["USD_ZAR", 105124],
-                        ["XAG_USD", 77790],
-                        ["XAU_JPY", 6908],
-                        ["XPD_USD", 45852],
-                        ["GBP_AUD", 84340],
-                        ["USD_PLN", 11105],
-                        ["GBP_ZAR", 49500],
-                        ["CHF_ZAR", 58074],
-                        ["EUR_CZK", 23954],
-                    ],
-                    [
-                        ["EUR_USD", 52144],
-                        ["EUR_HKD", 11160],
-                        ["GBP_CHF", 27920],
-                        ["NZD_HKD", 56493],
-                        ["USD_MXN", 20739],
-                        ["USD_HKD", 87862],
-                        ["USD_ZAR", 12767],
-                        ["XAG_USD", 61731],
-                        ["AUD_USD", 31860],
-                        ["XAU_JPY", 59465],
-                        ["XPD_USD", 47769],
-                        ["USD_PLN", 39861]
-                    ]
-                ];
+                this.current_time = new Date();
+                
                 this.get_volume = function() {
-                    if ( this.current_volume > this.all_volumes.length ) {
-                        this.current_volume = 0;
-                        return this.all_volumes[this.current_volume];
+                    var new_time = new Date();
+                    var current_seconds = parseInt(this.current_time.getTime() / 1000);
+                    var new_seconds = parseInt(new_time.getTime() / 1000);
+                    if ( new_seconds > current_seconds ) {
+                        this.current_time = new_time;
+                        var quantity = Math.floor(Math.random()*95)+1;
+                        var pairs = {};
+                        var volumes = [];
+                        var pair = pair_names[Math.floor(Math.random()*95)];
+                        for ( var x = 0 ; x < quantity ; x++ ) {
+                            while ( typeof(pairs[pair]) !== "undefined" ) {
+                                var rand = Math.floor(Math.random()*95);
+                                pair = pair_names[rand];
+                            }
+                            pairs[pair] = 1;
+                            var new_volume = [ pair, Math.floor(Math.random()*120000)+1 ];
+                            volumes.push(new_volume);
+                        }
+                        return volumes;
                     }
-                    else {
-                        return this.all_volumes[this.current_volume++];
-                    }
+                    return;
                 };
             };
     
