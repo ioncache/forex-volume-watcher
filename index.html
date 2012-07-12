@@ -1,391 +1,456 @@
 <!DOCTYPE html>
 
 <html>
-<head>
-    <title>Hackathon Test</title>
-    <meta charset="UTF-8" />
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script type="text/javascript" src="js/Three.js"></script>
-
-    <script>
-        var camera, scene, renderer, container, geometry, material, mesh,
-            radius = 1000,
-            rotationSpeed = 0.1,
-            height = window.innerHeight,
-            width  = window.innerWidth;
-        var old_scale;
-        var old_volume;
-        var current_time = new Date();
-        var volumes = new Volumes;
-        var pairs = [ ]
-        var currency_pairs = {
-            "AUD_CAD": { "color": "0xCD5C5C", "mesh": "" },
-            "AUD_CHF": { "color": "0xF08080", "mesh": "" },
-            "AUD_HKD": { "color": "0xFA8072", "mesh": "" },
-            "AUD_JPY": { "color": "0xE9967A", "mesh": "" },
-            "AUD_NZD": { "color": "0xFFA07A", "mesh": "" },
-            "AUD_SGD": { "color": "0xDC143C", "mesh": "" },
-            "AUD_USD": { "color": "0xFF0000", "mesh": "" },
-            "CAD_CHF": { "color": "0xB22222", "mesh": "" },
-            "CAD_HKD": { "color": "0x8B0000", "mesh": "" },
-            "CAD_JPY": { "color": "0xFFC0CB", "mesh": "" },
-            "CAD_SGD": { "color": "0xFFB6C1", "mesh": "" },
-            "CHF_HKD": { "color": "0xFF69B4", "mesh": "" },
-            "CHF_JPY": { "color": "0xFF1493", "mesh": "" },
-            "CHF_ZAR": { "color": "0xC71585", "mesh": "" },
-            "EUR_AUD": { "color": "0xDB7093", "mesh": "" },
-            "EUR_CAD": { "color": "0xFFA07A", "mesh": "" },
-            "EUR_CHF": { "color": "0xFF7F50", "mesh": "" },
-            "EUR_CZK": { "color": "0xFF6347", "mesh": "" },
-            "EUR_DKK": { "color": "0xFF4500", "mesh": "" },
-            "EUR_GBP": { "color": "0xFF8C00", "mesh": "" },
-            "EUR_HKD": { "color": "0xFFA500", "mesh": "" },
-            "EUR_HUF": { "color": "0xFFD700", "mesh": "" },
-            "EUR_JPY": { "color": "0xFFFF00", "mesh": "" },
-            "EUR_NOK": { "color": "0xEEE8AA", "mesh": "" },
-            "EUR_NZD": { "color": "0xF0E68C", "mesh": "" },
-            "EUR_PLN": { "color": "0xD8BFD8", "mesh": "" },
-            "EUR_SEK": { "color": "0xDDA0DD", "mesh": "" },
-            "EUR_SGD": { "color": "0xEE82EE", "mesh": "" },
-            "EUR_TRY": { "color": "0xDA70D6", "mesh": "" },
-            "EUR_USD": { "color": "0xFF00FF", "mesh": "" },
-            "EUR_ZAR": { "color": "0xFF00FF", "mesh": "" },
-            "GBP_AUD": { "color": "0xBA55D3", "mesh": "" },
-            "GBP_CAD": { "color": "0x9370DB", "mesh": "" },
-            "GBP_CHF": { "color": "0x9966CC", "mesh": "" },
-            "GBP_HKD": { "color": "0x8A2BE2", "mesh": "" },
-            "GBP_JPY": { "color": "0x9400D3", "mesh": "" },
-            "GBP_NZD": { "color": "0x9932CC", "mesh": "" },
-            "GBP_PLN": { "color": "0x8B008B", "mesh": "" },
-            "GBP_SGD": { "color": "0x800080", "mesh": "" },
-            "GBP_USD": { "color": "0x4B0082", "mesh": "" },
-            "GBP_ZAR": { "color": "0x6A5ACD", "mesh": "" },
-            "HKD_JPY": { "color": "0x483D8B", "mesh": "" },
-            "NZD_CAD": { "color": "0x7B68EE", "mesh": "" },
-            "NZD_CHF": { "color": "0xADFF2F", "mesh": "" },
-            "NZD_HKD": { "color": "0x7FFF00", "mesh": "" },
-            "NZD_JPY": { "color": "0x7CFC00", "mesh": "" },
-            "NZD_SGD": { "color": "0x00FF00", "mesh": "" },
-            "NZD_USD": { "color": "0x32CD32", "mesh": "" },
-            "SGD_CHF": { "color": "0x98FB98", "mesh": "" },
-            "SGD_HKD": { "color": "0x90EE90", "mesh": "" },
-            "SGD_JPY": { "color": "0x00FA9A", "mesh": "" },
-            "TRY_JPY": { "color": "0x00FF7F", "mesh": "" },
-            "USD_CAD": { "color": "0x3CB371", "mesh": "" },
-            "USD_CHF": { "color": "0x2E8B57", "mesh": "" },
-            "USD_CNY": { "color": "0x228B22", "mesh": "" },
-            "USD_CZK": { "color": "0x008000", "mesh": "" },
-            "USD_DKK": { "color": "0x006400", "mesh": "" },
-            "USD_HKD": { "color": "0x9ACD32", "mesh": "" },
-            "USD_HUF": { "color": "0x6B8E23", "mesh": "" },
-            "USD_INR": { "color": "0x808000", "mesh": "" },
-            "USD_JPY": { "color": "0x556B2F", "mesh": "" },
-            "USD_MXN": { "color": "0x66CDAA", "mesh": "" },
-            "USD_NOK": { "color": "0x20B2AA", "mesh": "" },
-            "USD_PLN": { "color": "0x008B8B", "mesh": "" },
-            "USD_SAR": { "color": "0x008080", "mesh": "" },
-            "USD_SEK": { "color": "0x00FFFF", "mesh": "" },
-            "USD_SGD": { "color": "0x40E0D0", "mesh": "" },
-            "USD_THB": { "color": "0x48D1CC", "mesh": "" },
-            "USD_TRY": { "color": "0x00CED1", "mesh": "" },
-            "USD_TWD": { "color": "0x5F9EA0", "mesh": "" },
-            "USD_ZAR": { "color": "0x1E90FF", "mesh": "" },
-            "XAG_AUD": { "color": "0x6495ED", "mesh": "" },
-            "XAG_CAD": { "color": "0x7B68EE", "mesh": "" },
-            "XAG_CHF": { "color": "0x4169E1", "mesh": "" },
-            "XAG_EUR": { "color": "0x0000ff", "mesh": "" },
-            "XAG_GBP": { "color": "0x0000CD", "mesh": "" },
-            "XAG_HKD": { "color": "0x00008B", "mesh": "" },
-            "XAG_JPY": { "color": "0x0000ff", "mesh": "" },
-            "XAG_NZD": { "color": "0x000080", "mesh": "" },
-            "XAG_SGD": { "color": "0xA52A2A", "mesh": "" },
-            "XAG_USD": { "color": "0xA0522D", "mesh": "" },
-            "XAU_AUD": { "color": "0x8B4513", "mesh": "" },
-            "XAU_CAD": { "color": "0xD2691E", "mesh": "" },
-            "XAU_CHF": { "color": "0xCD853F", "mesh": "" },
-            "XAU_EUR": { "color": "0xB8860B", "mesh": "" },
-            "XAU_GBP": { "color": "0xDAA520", "mesh": "" },
-            "XAU_HKD": { "color": "0xF4A460", "mesh": "" },
-            "XAU_JPY": { "color": "0xBC8F8F", "mesh": "" },
-            "XAU_NZD": { "color": "0xD2B48C", "mesh": "" },
-            "XAU_SGD": { "color": "0xDEB887", "mesh": "" },
-            "XAU_USD": { "color": "0xF2DEB3", "mesh": "" },
-            "XAU_XAG": { "color": "0xF4DEAD", "mesh": "" },
-            "XPD_USD": { "color": "0xF6E4C4", "mesh": "" },
-            "XPT_USD": { "color": "0xF8EBCD", "mesh": "" },
-            "ZAR_JPY": { "color": "0xFAF8DC", "mesh": "" }
-        };
-
-        function init() {
+    <head>
+        <title>Hackathon Test</title>
+        <meta charset="UTF-8" />
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+        <script type="text/javascript" src="js/Three.js"></script>
     
-            scene = new THREE.Scene();
-    
-            camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 10000 );
-            camera.position.z = 1000;
-            scene.add( camera );
-
-            var x = -700;
-            var z = 0;
-            for ( var i in currency_pairs ) {
-                geometry = new THREE.CubeGeometry( 100, 10, 100 );
-                material = new THREE.MeshBasicMaterial({
-                    color: currency_pairs[i].color,
-                    wireframe: false,
-                    vertexColors: THREE.VertexColors
-                });
-                mesh = new THREE.Mesh( geometry, material );
-                mesh.position = { "x": x, "y": 0, "z": z };
-                if ( x < 700 ) {
-                    x += 140;
-                }
-                else {
-                    x = -700;
-                    z += 140;
-                }
-                scene.add( mesh );
-                currency_pairs[i].mesh = mesh;
-            }
-
-            renderer = new THREE.WebGLRenderer();
-            renderer.setSize( window.innerWidth, window.innerHeight );
-
-            $("#container").append( renderer.domElement );
-
-            controls = new THREE.TrackballControls( camera, renderer.domElement );
-            controls.rotateSpeed = 1.0;
-            controls.zoomSpeed = 1.2;
-            controls.panSpeed = 0.2;
-            controls.noZoom = false;
-            controls.noPan = false;
-            controls.staticMoving = false;
-            controls.dynamicDampingFactor = 0.3;
-            controls.minDistance = radius * 1.1;
-            controls.maxDistance = radius * 100;
-            controls.keys = [ 65, 83, 68 ]; // [ rotateKey, zoomKey, panKey ]
-
-            window.addEventListener( 'resize', onWindowResize, false );
-        }
-    
-        function animate() {
-            var new_time = new Date();
-            var current_seconds = parseInt(current_time.getTime() / 1000);
-            var new_seconds = parseInt(new_time.getTime() / 1000);
-
-            if ( typeof(old_volume) !== "object"  || new_seconds > current_seconds) {
-                old_volume = volumes.get_volume();
-                if ( new_seconds > current_seconds ) {
-                    current_time = new_time;
-                }
-            }
-            for ( var i in old_volume ) {
-                var pair =  currency_pairs[old_volume[i][0]];
-                var old_scale = pair.old_scale;
-                var current_scale = pair.mesh.scale.y;
-                var new_scale = volume_to_scale(old_volume[i][1]);
-
-                if ( typeof(old_scale) !== "number" ) {
-                    pair.old_scale = new_scale;
-                    pair.new_scale = new_scale;
-                    old_scale = new_scale;
-                }
-                else if ( pair.old_scale !== new_scale ) {
-                    pair.old_scale = new_scale;
-                    pair.new_scale = new_scale;
-                }
-
-                if ( old_scale > current_scale) {
-                    pair.new_scale += (old_scale - current_scale) / 10;
-                }
-                else if ( old_scale < current_scale ) {
-                    pair.new_scale -= (current_scale - old_scale) / 10 ;
-                }
-                else {
-                    pair.new_scale = current_scale;
-                }
-            }
-            requestAnimationFrame(animate);
-            render();
-        }
-
-        function onWindowResize( event ) {
-                width = window.innerWidth;
-                height = window.innerHeight;
-                renderer.setSize( width, height );
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                controls.screen.width = width;
-                controls.screen.height = height;
-                camera.radius = ( width + height ) / 4;
-        };
-        function render(current_mesh, scale) {
-            for ( i in currency_pairs ) {
-                var pair  = currency_pairs[i];
-                if ( pair.new_scale && pair.new_scale !== pair.mesh.scale.y ) {
-                    currency_pairs[i].mesh.scale.y = currency_pairs[i].new_scale;
-                }
-            }
-            controls.update();
-            renderer.render( scene, camera );
-        }
-
-        function volume_to_scale(volume) {
-            var scale;
-            if ( volume >= 100000 ) {
-                scale = 25;
-            }
-            else {
-                scale = 25/100000*volume;
-            }
-            if ( scale < 1 ) {
-                return 1;
-            }
-            return scale;
-        }
-
-        function Volumes() {
-            this.current_volume = 0;
-            this.all_volumes = [
-                [
-                    ["EUR_USD", 53926],
-                    ["USD_CAD", 65961],
-                    ["AUD_CAD", 61851],
-                    ["GBP_CAD", 44098],
-                    ["GBP_CAD", 43839],
-                ],
-                [
-                    ["EUR_USD", 23292],
-                    ["USD_HKD", 56582],
-                    ["XAG_CAD", 90371],
-                ],
-                [
-                    ["EUR_USD", 67929],
-                    ["GBP_AUD", 51753],
-                    ["AUD_USD", 43226],
-                    ["EUR_HKD", 47791],
-                    ["GBP_CHF", 43689],
-                    ["NZD_CAD", 55484],
-                    ["NZD_HKD", 57833],
-                    ["USD_MXN", 7467],
-                ],
-                [
-                    ["EUR_USD", 95152],
-                    ["GBP_CHF", 60822],
-                    ["USD_MXN", 56523],
-                    ["USD_ZAR", 64868],
-                    ["XAG_USD", 71073],
-                    ["XAU_JPY", 40221],
-                    ["XPD_USD", 26394],
-                    ["USD_PLN", 104445],
-                    ["AUD_USD", 16783],
-                    ["GBP_ZAR", 13634],
-                    ["CHF_ZAR", 59767],
-                ],
-                [
-                    ["EUR_USD", 71128],
-                    ["USD_HKD", 81139],
-                    ["EUR_HKD", 56548],
-                    ["USD_MXN", 68161],
-                    ["USD_ZAR", 73472],
-                    ["XAG_USD", 106826],
-                    ["XAU_JPY", 16393],
-                    ["XPD_USD", 17329],
-                    ["USD_PLN", 30292],
-                    ["GBP_ZAR", 37114],
-                    ["CHF_ZAR", 70692],
-                ],
-                [
-                    ["EUR_USD", 45302],
-                    ["GBP_CHF", 108018],
-                    ["NZD_HKD", 107995],
-                    ["USD_MXN", 11456],
-                    ["USD_ZAR", 13720],
-                    ["XAG_USD", 97638],
-                    ["XAU_JPY", 23537],
-                    ["GBP_AUD", 47911],
-                    ["XPD_USD", 76787],
-                    ["USD_PLN", 9579],
-                    ["GBP_ZAR", 98873],
-                    ["CHF_ZAR", 103584],
-                    ["EUR_CZK", 106241],
-                    ["EUR_NOK", 108680],
-                    ["USD_HKD", 57050],
-                    ["NZD_SGD", 19844],
-                    ["TRY_JPY", 80153],
-                    ["AUD_CHF", 108894],
-                    ["EUR_PLN", 83643],
-                    ["GBP_PLN", 109615],
-                ],
-                [
-                    ["EUR_USD", 56270],
-                    ["EUR_HKD", 90390],
-                    ["NZD_HKD", 47819],
-                    ["USD_MXN", 92213],
-                    ["USD_ZAR", 34622],
-                    ["XAG_USD", 4745],
-                    ["XAU_JPY", 84196],
-                    ["XPD_USD", 47158],
-                    ["AUD_USD", 30161],
-                    ["USD_PLN", 76354],
-                    ["USD_HKD", 60025],
-                    ["GBP_ZAR", 83855],
-                    ["CHF_ZAR", 109089],
-                    ["EUR_CZK", 36981],
-                    ["EUR_NOK", 11901],
-                    ["NZD_SGD", 87512],
-                    ["TRY_JPY", 64831],
-                    ["AUD_CHF", 65100],
-                    ["EUR_PLN", 32230],
-                ],
-                [
-                    ["EUR_USD", 83125],
-                    ["USD_MXN", 42030],
-                    ["USD_ZAR", 105124],
-                    ["XAG_USD", 77790],
-                    ["XAU_JPY", 6908],
-                    ["XPD_USD", 45852],
-                    ["GBP_AUD", 84340],
-                    ["USD_PLN", 11105],
-                    ["GBP_ZAR", 49500],
-                    ["CHF_ZAR", 58074],
-                    ["EUR_CZK", 23954],
-                ],
-                [
-                    ["EUR_USD", 52144],
-                    ["EUR_HKD", 11160],
-                    ["GBP_CHF", 27920],
-                    ["NZD_HKD", 56493],
-                    ["USD_MXN", 20739],
-                    ["USD_HKD", 87862],
-                    ["USD_ZAR", 12767],
-                    ["XAG_USD", 61731],
-                    ["AUD_USD", 31860],
-                    ["XAU_JPY", 59465],
-                    ["XPD_USD", 47769],
-                    ["USD_PLN", 39861]
-                ]
-            ];
-            this.get_volume = function() {
-                if ( this.current_volume > this.all_volumes.length ) {
-                    this.current_volume = 0;
-                    return this.all_volumes[this.current_volume];
-                }
-                else {
-                    return this.all_volumes[this.current_volume++];
-                }
+        <script>
+            var camera, scene, renderer, container, geometry, material, mesh,
+                radius, rotationSpeed, height, width;
+            var old_scale, old_volume;
+            var current_time = new Date();
+            var volumes = new Volumes;
+            var currency_pairs = {
+                "AUD_CAD": { "color": "CD5C5C", "mesh": "" },
+                "AUD_CHF": { "color": "F08080", "mesh": "" },
+                "AUD_HKD": { "color": "FA8072", "mesh": "" },
+                "AUD_JPY": { "color": "E9967A", "mesh": "" },
+                "AUD_NZD": { "color": "FFA07A", "mesh": "" },
+                "AUD_SGD": { "color": "DC143C", "mesh": "" },
+                "AUD_USD": { "color": "FF0000", "mesh": "" },
+                "CAD_CHF": { "color": "B22222", "mesh": "" },
+                "CAD_HKD": { "color": "8B0000", "mesh": "" },
+                "CAD_JPY": { "color": "FFC0CB", "mesh": "" },
+                "CAD_SGD": { "color": "FFB6C1", "mesh": "" },
+                "CHF_HKD": { "color": "FF69B4", "mesh": "" },
+                "CHF_JPY": { "color": "FF1493", "mesh": "" },
+                "CHF_ZAR": { "color": "C71585", "mesh": "" },
+                "EUR_AUD": { "color": "DB7093", "mesh": "" },
+                "EUR_CAD": { "color": "FFA07A", "mesh": "" },
+                "EUR_CHF": { "color": "FF7F50", "mesh": "" },
+                "EUR_CZK": { "color": "FF6347", "mesh": "" },
+                "EUR_DKK": { "color": "FF4500", "mesh": "" },
+                "EUR_GBP": { "color": "FF8C00", "mesh": "" },
+                "EUR_HKD": { "color": "FFA500", "mesh": "" },
+                "EUR_HUF": { "color": "FFD700", "mesh": "" },
+                "EUR_JPY": { "color": "FFFF00", "mesh": "" },
+                "EUR_NOK": { "color": "EEE8AA", "mesh": "" },
+                "EUR_NZD": { "color": "F0E68C", "mesh": "" },
+                "EUR_PLN": { "color": "D8BFD8", "mesh": "" },
+                "EUR_SEK": { "color": "DDA0DD", "mesh": "" },
+                "EUR_SGD": { "color": "EE82EE", "mesh": "" },
+                "EUR_TRY": { "color": "DA70D6", "mesh": "" },
+                "EUR_USD": { "color": "FF00FF", "mesh": "" },
+                "EUR_ZAR": { "color": "FF00FF", "mesh": "" },
+                "GBP_AUD": { "color": "BA55D3", "mesh": "" },
+                "GBP_CAD": { "color": "9370DB", "mesh": "" },
+                "GBP_CHF": { "color": "9966CC", "mesh": "" },
+                "GBP_HKD": { "color": "8A2BE2", "mesh": "" },
+                "GBP_JPY": { "color": "9400D3", "mesh": "" },
+                "GBP_NZD": { "color": "9932CC", "mesh": "" },
+                "GBP_PLN": { "color": "8B008B", "mesh": "" },
+                "GBP_SGD": { "color": "800080", "mesh": "" },
+                "GBP_USD": { "color": "4B0082", "mesh": "" },
+                "GBP_ZAR": { "color": "6A5ACD", "mesh": "" },
+                "HKD_JPY": { "color": "483D8B", "mesh": "" },
+                "NZD_CAD": { "color": "7B68EE", "mesh": "" },
+                "NZD_CHF": { "color": "ADFF2F", "mesh": "" },
+                "NZD_HKD": { "color": "7FFF00", "mesh": "" },
+                "NZD_JPY": { "color": "7CFC00", "mesh": "" },
+                "NZD_SGD": { "color": "00FF00", "mesh": "" },
+                "NZD_USD": { "color": "32CD32", "mesh": "" },
+                "SGD_CHF": { "color": "98FB98", "mesh": "" },
+                "SGD_HKD": { "color": "90EE90", "mesh": "" },
+                "SGD_JPY": { "color": "00FA9A", "mesh": "" },
+                "TRY_JPY": { "color": "00FF7F", "mesh": "" },
+                "USD_CAD": { "color": "3CB371", "mesh": "" },
+                "USD_CHF": { "color": "2E8B57", "mesh": "" },
+                "USD_CNY": { "color": "228B22", "mesh": "" },
+                "USD_CZK": { "color": "008000", "mesh": "" },
+                "USD_DKK": { "color": "006400", "mesh": "" },
+                "USD_HKD": { "color": "9ACD32", "mesh": "" },
+                "USD_HUF": { "color": "6B8E23", "mesh": "" },
+                "USD_INR": { "color": "808000", "mesh": "" },
+                "USD_JPY": { "color": "556B2F", "mesh": "" },
+                "USD_MXN": { "color": "66CDAA", "mesh": "" },
+                "USD_NOK": { "color": "20B2AA", "mesh": "" },
+                "USD_PLN": { "color": "008B8B", "mesh": "" },
+                "USD_SAR": { "color": "008080", "mesh": "" },
+                "USD_SEK": { "color": "00FFFF", "mesh": "" },
+                "USD_SGD": { "color": "40E0D0", "mesh": "" },
+                "USD_THB": { "color": "48D1CC", "mesh": "" },
+                "USD_TRY": { "color": "00CED1", "mesh": "" },
+                "USD_TWD": { "color": "5F9EA0", "mesh": "" },
+                "USD_ZAR": { "color": "1E90FF", "mesh": "" },
+                "XAG_AUD": { "color": "6495ED", "mesh": "" },
+                "XAG_CAD": { "color": "7B68EE", "mesh": "" },
+                "XAG_CHF": { "color": "4169E1", "mesh": "" },
+                "XAG_EUR": { "color": "0000ff", "mesh": "" },
+                "XAG_GBP": { "color": "0000CD", "mesh": "" },
+                "XAG_HKD": { "color": "00008B", "mesh": "" },
+                "XAG_JPY": { "color": "0000ff", "mesh": "" },
+                "XAG_NZD": { "color": "000080", "mesh": "" },
+                "XAG_SGD": { "color": "A52A2A", "mesh": "" },
+                "XAG_USD": { "color": "A0522D", "mesh": "" },
+                "XAU_AUD": { "color": "8B4513", "mesh": "" },
+                "XAU_CAD": { "color": "D2691E", "mesh": "" },
+                "XAU_CHF": { "color": "CD853F", "mesh": "" },
+                "XAU_EUR": { "color": "B8860B", "mesh": "" },
+                "XAU_GBP": { "color": "DAA520", "mesh": "" },
+                "XAU_HKD": { "color": "F4A460", "mesh": "" },
+                "XAU_JPY": { "color": "BC8F8F", "mesh": "" },
+                "XAU_NZD": { "color": "D2B48C", "mesh": "" },
+                "XAU_SGD": { "color": "DEB887", "mesh": "" },
+                "XAU_USD": { "color": "F2DEB3", "mesh": "" },
+                "XAU_XAG": { "color": "F4DEAD", "mesh": "" },
+                "XPD_USD": { "color": "F6E4C4", "mesh": "" },
+                "XPT_USD": { "color": "F8EBCD", "mesh": "" },
+                "ZAR_JPY": { "color": "FAF8DC", "mesh": "" }
             };
-        };
+    
+            function init() {
+        
+                scene = new THREE.Scene();
+        
+                camera = new THREE.PerspectiveCamera( 75, width / height, 1, 10000 );
+                camera.position.z = 1000;
+                scene.add( camera );
+    
+                var x = -700;
+                var z = -700;
+                for ( var i in currency_pairs ) {
+                    geometry = new THREE.CubeGeometry( 100, 10, 100 );
+                    material = new THREE.MeshBasicMaterial({
+                        color: "0x" + currency_pairs[i].color,
+                        wireframe: false,
+                        vertexColors: THREE.VertexColors
+                    });
+                    mesh = new THREE.Mesh( geometry, material );
+                    mesh.position = { "x": x, "y": 0, "z": z };
+                    if ( x < 700 ) {
+                        x += 140;
+                    }
+                    else {
+                        x = -700;
+                        z += 140;
+                    }
+                    scene.add( mesh );
+                    currency_pairs[i].mesh = mesh;
+                }
 
-        $(document).ready(function() {
-            init();
-            animate();
-        });
-    </script>
+                var previous_pair = "";
+                var current_column = "";
+                for ( var i in currency_pairs ) {
+                    var pair = currency_pairs[i];
+                    if ( previous_pair.substr(0,3) != i.substr(0,3) &&
+                        previous_pair.substr(0,1) != "X" ||
+                        previous_pair.substr(0,1) == "X" && i.substr(0,1) != "X"
+                    ) {
+                        current_column = $("<div />")
+                        .addClass("column")
+                        .appendTo("#legend");
+                    }
+                    var row = $("<div />").addClass("row");
+                    $("<div />")
+                    .addClass("marker")
+                    .css("background-color", "#" + pair.color)
+                    .appendTo(row);
+                    $("<div />")
+                    .addClass("label")
+                    .text(i.replace(/_/, '/'))
+                    .appendTo(row);
+                    row.appendTo(current_column);
+                    previous_pair = i;
+                }
 
-</head>
+                renderer = new THREE.WebGLRenderer();
+                renderer.setSize( width, height );
+    
+                $("#container").append( renderer.domElement );
+    
+                controls = new THREE.TrackballControls( camera, renderer.domElement );
+                controls.rotateSpeed = 1.0;
+                controls.zoomSpeed = 1.2;
+                controls.panSpeed = 0.2;
+                controls.noZoom = false;
+                controls.noPan = false;
+                controls.staticMoving = false;
+                controls.dynamicDampingFactor = 0.3;
+                controls.minDistance = radius * 1.1;
+                controls.maxDistance = radius * 100;
+                controls.keys = [ 65, 83, 68 ]; // [ rotateKey, zoomKey, panKey ]
+    
+                window.addEventListener( 'resize', onWindowResize, false );
+            }
+        
+            function animate() {
+                var new_time = new Date();
+                var current_seconds = parseInt(current_time.getTime() / 1000);
+                var new_seconds = parseInt(new_time.getTime() / 1000);
+    
+                if ( typeof(old_volume) !== "object"  || new_seconds > current_seconds) {
+                    old_volume = volumes.get_volume();
+                    if ( new_seconds > current_seconds ) {
+                        current_time = new_time;
+                    }
+                }
+                for ( var i in old_volume ) {
+                    var pair =  currency_pairs[old_volume[i][0]];
+                    var old_scale = pair.old_scale;
+                    var current_scale = pair.mesh.scale.y;
+                    var new_scale = volume_to_scale(old_volume[i][1]);
+    
+                    if ( typeof(old_scale) !== "number" ) {
+                        pair.old_scale = new_scale;
+                        pair.new_scale = new_scale;
+                        old_scale = new_scale;
+                    }
+                    else if ( pair.old_scale !== new_scale ) {
+                        pair.old_scale = new_scale;
+                        pair.new_scale = new_scale;
+                    }
+    
+                    if ( old_scale > current_scale) {
+                        pair.new_scale += (old_scale - current_scale) / 10;
+                    }
+                    else if ( old_scale < current_scale ) {
+                        pair.new_scale -= (current_scale - old_scale) / 10 ;
+                    }
+                    else {
+                        pair.new_scale = current_scale;
+                    }
+                }
+                requestAnimationFrame(animate);
+                render();
+            }
+    
+            function onWindowResize( event ) {
+                    height = $("#container").innerHeight();
+                    width  = $("#container").innerWidth();
+                    renderer.setSize( width, height );
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                    controls.screen.width = width;
+                    controls.screen.height = height;
+                    camera.radius = ( width + height ) / 4;
+            };
+            function render(current_mesh, scale) {
+                for ( i in currency_pairs ) {
+                    var pair  = currency_pairs[i];
+                    if ( pair.new_scale && pair.new_scale !== pair.mesh.scale.y ) {
+                        currency_pairs[i].mesh.scale.y = currency_pairs[i].new_scale;
+                    }
+                }
+                controls.update();
+                renderer.render( scene, camera );
+            }
+    
+            function volume_to_scale(volume) {
+                var scale;
+                if ( volume >= 100000 ) {
+                    scale = 25;
+                }
+                else {
+                    scale = 25/100000*volume;
+                }
+                if ( scale < 1 ) {
+                    return 1;
+                }
+                return scale;
+            }
+    
+            function Volumes() {
+                this.current_volume = 0;
+                this.all_volumes = [
+                    [
+                        ["EUR_USD", 53926],
+                        ["USD_CAD", 65961],
+                        ["AUD_CAD", 61851],
+                        ["GBP_CAD", 44098],
+                        ["GBP_CAD", 43839],
+                    ],
+                    [
+                        ["EUR_USD", 23292],
+                        ["USD_HKD", 56582],
+                        ["XAG_CAD", 90371],
+                    ],
+                    [
+                        ["EUR_USD", 67929],
+                        ["GBP_AUD", 51753],
+                        ["AUD_USD", 43226],
+                        ["EUR_HKD", 47791],
+                        ["GBP_CHF", 43689],
+                        ["NZD_CAD", 55484],
+                        ["NZD_HKD", 57833],
+                        ["USD_MXN", 7467],
+                    ],
+                    [
+                        ["EUR_USD", 95152],
+                        ["GBP_CHF", 60822],
+                        ["USD_MXN", 56523],
+                        ["USD_ZAR", 64868],
+                        ["XAG_USD", 71073],
+                        ["XAU_JPY", 40221],
+                        ["XPD_USD", 26394],
+                        ["USD_PLN", 104445],
+                        ["AUD_USD", 16783],
+                        ["GBP_ZAR", 13634],
+                        ["CHF_ZAR", 59767],
+                    ],
+                    [
+                        ["EUR_USD", 71128],
+                        ["USD_HKD", 81139],
+                        ["EUR_HKD", 56548],
+                        ["USD_MXN", 68161],
+                        ["USD_ZAR", 73472],
+                        ["XAG_USD", 106826],
+                        ["XAU_JPY", 16393],
+                        ["XPD_USD", 17329],
+                        ["USD_PLN", 30292],
+                        ["GBP_ZAR", 37114],
+                        ["CHF_ZAR", 70692],
+                    ],
+                    [
+                        ["EUR_USD", 45302],
+                        ["GBP_CHF", 108018],
+                        ["NZD_HKD", 107995],
+                        ["USD_MXN", 11456],
+                        ["USD_ZAR", 13720],
+                        ["XAG_USD", 97638],
+                        ["XAU_JPY", 23537],
+                        ["GBP_AUD", 47911],
+                        ["XPD_USD", 76787],
+                        ["USD_PLN", 9579],
+                        ["GBP_ZAR", 98873],
+                        ["CHF_ZAR", 103584],
+                        ["EUR_CZK", 106241],
+                        ["EUR_NOK", 108680],
+                        ["USD_HKD", 57050],
+                        ["NZD_SGD", 19844],
+                        ["TRY_JPY", 80153],
+                        ["AUD_CHF", 108894],
+                        ["EUR_PLN", 83643],
+                        ["GBP_PLN", 109615],
+                    ],
+                    [
+                        ["EUR_USD", 56270],
+                        ["EUR_HKD", 90390],
+                        ["NZD_HKD", 47819],
+                        ["USD_MXN", 92213],
+                        ["USD_ZAR", 34622],
+                        ["XAG_USD", 4745],
+                        ["XAU_JPY", 84196],
+                        ["XPD_USD", 47158],
+                        ["AUD_USD", 30161],
+                        ["USD_PLN", 76354],
+                        ["USD_HKD", 60025],
+                        ["GBP_ZAR", 83855],
+                        ["CHF_ZAR", 109089],
+                        ["EUR_CZK", 36981],
+                        ["EUR_NOK", 11901],
+                        ["NZD_SGD", 87512],
+                        ["TRY_JPY", 64831],
+                        ["AUD_CHF", 65100],
+                        ["EUR_PLN", 32230],
+                    ],
+                    [
+                        ["EUR_USD", 83125],
+                        ["USD_MXN", 42030],
+                        ["USD_ZAR", 105124],
+                        ["XAG_USD", 77790],
+                        ["XAU_JPY", 6908],
+                        ["XPD_USD", 45852],
+                        ["GBP_AUD", 84340],
+                        ["USD_PLN", 11105],
+                        ["GBP_ZAR", 49500],
+                        ["CHF_ZAR", 58074],
+                        ["EUR_CZK", 23954],
+                    ],
+                    [
+                        ["EUR_USD", 52144],
+                        ["EUR_HKD", 11160],
+                        ["GBP_CHF", 27920],
+                        ["NZD_HKD", 56493],
+                        ["USD_MXN", 20739],
+                        ["USD_HKD", 87862],
+                        ["USD_ZAR", 12767],
+                        ["XAG_USD", 61731],
+                        ["AUD_USD", 31860],
+                        ["XAU_JPY", 59465],
+                        ["XPD_USD", 47769],
+                        ["USD_PLN", 39861]
+                    ]
+                ];
+                this.get_volume = function() {
+                    if ( this.current_volume > this.all_volumes.length ) {
+                        this.current_volume = 0;
+                        return this.all_volumes[this.current_volume];
+                    }
+                    else {
+                        return this.all_volumes[this.current_volume++];
+                    }
+                };
+            };
+    
+            $(document).ready(function() {
+                radius = 1000;
+                rotationSpeed = 0.1;
+                height = $("#container").innerHeight();
+                width  = $("#container").innerWidth();
+                init();
+                animate();
+            });
+        </script>
 
-<body>
-
-<div id="container"></div>
-
-</body>
+        <style type="text/css">
+            #legend {
+                width: 1320px;
+                margin: 10px auto 0;
+            }
+            #legend .column {
+                float: left;
+                width: 100px;
+                height: auto;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 10px;
+                font-weight: bold;
+                color: #666666;
+                padding-bottom: 20px;
+                margin-right: 10px;
+            }
+            #legend .row {
+                float: left;
+                width: 96px;
+                height: 15px;
+                padding: 2px;
+                margin-bottom: 2px;
+                cursor: pointer;
+                background-color: #FFFFFF;
+            }
+            #legend .row:hover {
+                background-color: #DDDDDD;
+            }
+            #legend .marker {
+                float: left;
+                width: 15px;
+                height: 15px;
+                background-color: #666666;
+                margin-right: 10px;
+            }
+            #legend .label {
+                float: left;
+                width: 71px;
+                height: 15px;
+                line-height: 15px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div id="container" style="width: 100%; height: 550px;"></div>
+        <div id="legend"></div>
+    </body>
 </html>
