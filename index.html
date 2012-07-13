@@ -119,16 +119,17 @@
                 camera = new THREE.PerspectiveCamera( 75, width / height, 1, 10000 );
                 camera.position.z = 1000;
                 scene.add( camera );
-    
+
                 var x = -720;
                 var z = -560;
                 for ( var i in currency_pairs ) {
                     geometry = new THREE.CubeGeometry( 100, 10, 100 );
-                    material = new THREE.MeshBasicMaterial({
-                        color: "0x" + currency_pairs[i].color,
-                        wireframe: false,
-                        vertexColors: THREE.VertexColors
-                    });
+                    //material = new THREE.MeshBasicMaterial({
+                    //    color: "0x" + currency_pairs[i].color,
+                    //    wireframe: false,
+                    //    vertexColors: THREE.VertexColors
+                    //});
+                    material = new THREE.MeshLambertMaterial( { color: "0x" + currency_pairs[i].color, shading: THREE.FlatShading, overdraw: false } );
                     mesh = new THREE.Mesh( geometry, material );
                     mesh.position = { "x": x, "y": 0, "z": z };
                     if ( x < 720 ) {
@@ -166,12 +167,29 @@
                     row.appendTo(current_column);
                     previous_pair = i;
                 }
+                
+                var ambientLight = new THREE.AmbientLight( 0x333333 );
+                scene.add( ambientLight );
+
+                var directionalLight = new THREE.DirectionalLight( 0xffffff );
+                directionalLight.position.x = -500;
+                directionalLight.position.y = 300;
+                directionalLight.position.z = -300;
+                directionalLight.position.normalize();
+                scene.add( directionalLight );
+
+                directionalLight = new THREE.DirectionalLight( 0x666666 );
+                directionalLight.position.x = 800;
+                directionalLight.position.y = 100;
+                directionalLight.position.z = 500;
+                directionalLight.position.normalize();
+                scene.add( directionalLight );
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize( width, height );
-    
+
                 $("#container").append( renderer.domElement );
-    
+
                 controls = new THREE.TrackballControls( camera, renderer.domElement );
                 controls.rotateSpeed = 1.0;
                 controls.zoomSpeed = 1.2;
