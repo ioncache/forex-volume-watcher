@@ -8,9 +8,21 @@
         <script type="text/javascript" src="js/Three.js"></script>
 
         <script>
-            var camera, scene, renderer, container, radius, rotationSpeed, height, width;
+            var camera;
+            var container;
+            var height;
+            var mouse = new THREE.Vector2();
+            var projector;
+            var radius;
+            var renderer;
+            var rotationSpeed;
+            var scene;
+            var width;
+            var INTERSECTED, SELECTED;
+
             var current_rates;
             var current_time = new Date();
+
             var pair_names = [ "AUD_CAD","AUD_CHF","AUD_HKD","AUD_JPY","AUD_NZD","AUD_SGD","AUD_USD","CAD_CHF","CAD_HKD","CAD_JPY","CAD_SGD","CHF_HKD","CHF_JPY","CHF_ZAR","EUR_AUD","EUR_CAD","EUR_CHF","EUR_CZK","EUR_DKK","EUR_GBP","EUR_HKD","EUR_HUF","EUR_JPY","EUR_NOK","EUR_NZD","EUR_PLN","EUR_SEK","EUR_SGD","EUR_TRY","EUR_USD","EUR_ZAR","GBP_AUD","GBP_CAD","GBP_CHF","GBP_HKD","GBP_JPY","GBP_NZD","GBP_PLN","GBP_SGD","GBP_USD","GBP_ZAR","HKD_JPY","NZD_CAD","NZD_CHF","NZD_HKD","NZD_JPY","NZD_SGD","NZD_USD","SGD_CHF","SGD_HKD","SGD_JPY","TRY_JPY","USD_CAD","USD_CHF","USD_CNY","USD_CZK","USD_DKK","USD_HKD","USD_HUF","USD_INR","USD_JPY","USD_MXN","USD_NOK","USD_PLN","USD_SAR","USD_SEK","USD_SGD","USD_THB","USD_TRY","USD_TWD","USD_ZAR","XAG_AUD","XAG_CAD","XAG_CHF","XAG_EUR","XAG_GBP","XAG_HKD","XAG_JPY","XAG_NZD","XAG_SGD","XAG_USD","XAU_AUD","XAU_CAD","XAU_CHF","XAU_EUR","XAU_GBP","XAU_HKD","XAU_JPY","XAU_NZD","XAU_SGD","XAU_USD","XAU_XAG","XPD_USD","XPT_USD","ZAR_JPY" ];
             var currency_pairs = {
                 "AUD_CAD": { "group": 1, "color": "EDC791", "render": true, "mesh": "" },
@@ -116,9 +128,26 @@
 
                 //camera = new THREE.OrthographicCamera( -width, width, height, -height, -50000, 50000 );
                 //camera.position.set( 0, 200, 200 );
-
                 camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
                 camera.position.set( 0, 950, 850 );
+                scene.add( camera );
+
+                var ambientLight = new THREE.AmbientLight( 0x060606 );
+                scene.add( ambientLight );
+
+                var directionalLight = new THREE.DirectionalLight( 0xffffff );
+                directionalLight.position.x = -500;
+                directionalLight.position.y = 300;
+                directionalLight.position.z = -300;
+                directionalLight.position.normalize();
+                scene.add( directionalLight );
+
+                directionalLight = new THREE.DirectionalLight( 0xffffff );
+                directionalLight.position.x = 800;
+                directionalLight.position.y = 100;
+                directionalLight.position.z = 500;
+                directionalLight.position.normalize();
+                scene.add( directionalLight );
 
                 var x = -720;
                 var z = -560;
@@ -139,6 +168,7 @@
                         x = -720;
                         z += 140;
                     }
+                    mesh.currency_pair = i;
                     scene.add( mesh );
                     currency_pairs[i].mesh = mesh;
                 }
@@ -147,8 +177,7 @@
                 var current_column = "";
                 for ( var i in currency_pairs ) {
                     var pair = currency_pairs[i];
-                    if ( !previous_pair || currency_pairs[previous_pair].group !== pair.group
-                    ) {
+                    if ( !previous_pair || currency_pairs[previous_pair].group !== pair.group ) {
                         current_column = $("<div />")
                         .addClass("column")
                         .appendTo("#legend");
@@ -168,22 +197,7 @@
                     previous_pair = i;
                 }
 
-                var ambientLight = new THREE.AmbientLight( 0x333333 );
-                scene.add( ambientLight );
-
-                var directionalLight = new THREE.DirectionalLight( 0xffffff );
-                directionalLight.position.x = -500;
-                directionalLight.position.y = 300;
-                directionalLight.position.z = -300;
-                directionalLight.position.normalize();
-                scene.add( directionalLight );
-
-                directionalLight = new THREE.DirectionalLight( 0x666666 );
-                directionalLight.position.x = 800;
-                directionalLight.position.y = 100;
-                directionalLight.position.z = 500;
-                directionalLight.position.normalize();
-                scene.add( directionalLight );
+                projector = new THREE.Projector();
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize( width, height );
@@ -202,13 +216,53 @@
                 controls.maxDistance = radius * 100;
                 controls.keys = [ 65, 83, 68 ]; // [ rotateKey, zoomKey, panKey ]
 
-                window.addEventListener( 'resize', onWindowResize, false );
+                $(renderer.domElement).mousemove(on_canvas_mousemove);
+                $(renderer.domElement).click(on_canvas_click);
+                $(window).resize(onWindowResize);
             }
 
             function animate() {
                 determine_rate_scales();
                 requestAnimationFrame(animate);
                 render();
+            }
+
+            function on_canvas_mousemove(event) {
+                event.preventDefault();
+
+                mouse.x = ( event.clientX / width ) * 2 - 1;
+                mouse.y = - ( event.clientY / height ) * 2 + 1;
+
+                var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+                projector.unprojectVector( vector, camera );
+
+                var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+                var intersects = ray.intersectObjects( scene.children );
+                if ( intersects.length > 0 ) {
+                    if ( INTERSECTED != intersects[ 0 ].object ) {
+                        if ( INTERSECTED ) INTERSECTED.material.color.setHex( "0x" + currency_pairs[INTERSECTED.currency_pair].color );
+                        INTERSECTED = intersects[ 0 ].object;
+                        INTERSECTED.material.color.setHex( 0xff0000 );
+                    }
+                    $(renderer.domElement).css("cursor", "pointer");
+                } else {
+                    if ( INTERSECTED ) INTERSECTED.material.color.setHex( "0x" + currency_pairs[INTERSECTED.currency_pair].color );
+                    INTERSECTED = null;
+                    $(renderer.domElement).css("cursor", "auto");
+                }
+            }
+
+            function on_canvas_click(event) {
+                var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+                projector.unprojectVector( vector, camera );
+
+                var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+                var intersects = ray.intersectObjects( scene.children );
+                if ( intersects.length > 0 ) {
+                    var mesh = intersects[0].object;
+                    toggle_pair(mesh.currency_pair);
+                    INTERSECTED = null
+                }
             }
 
             function onWindowResize( event ) {
@@ -332,6 +386,18 @@
                 return null;
             };
 
+            function toggle_pair(pair) {
+                var el = $("#toggle_" + pair);
+                if ( el.hasClass("disabled") ) {
+                    currency_pairs[pair].render = true;
+                    el.removeClass("disabled");
+                }
+                else {
+                    currency_pairs[pair].render = false;
+                    el.addClass("disabled");
+                }
+            }
+
             $(document).ready(function() {
                 radius = 1000;
                 rotationSpeed = 0.1;
@@ -374,8 +440,8 @@
                 //}
 
                 $("#legend").on("click", ".row", function() {
-                    var pair = $(this).text().replace(/\//, "_");
-                    var el = $(this);
+                    var el   = $(this);
+                    var pair = el.text().replace(/\//, "_");
                     if ( el.hasClass("disabled") ) {
                         currency_pairs[pair].render = true;
                         el.removeClass("disabled");
