@@ -114,9 +114,11 @@
                 var geometry, material;
                 scene = new THREE.Scene();
 
-                camera = new THREE.PerspectiveCamera( 75, width / height, 1, 10000 );
-                camera.position.z = 1000;
-                scene.add( camera );
+                //camera = new THREE.OrthographicCamera( -width, width, height, -height, -50000, 50000 );
+                //camera.position.set( 0, 200, 200 );
+
+                camera = new THREE.PerspectiveCamera( 45, width / height, 1, 10000 );
+                camera.position.set( 0, 950, 850 );
 
                 var x = -720;
                 var z = -560;
@@ -418,6 +420,10 @@
                 marginn: 0;
                 padding: 0;
             }
+            #container {
+                width: 100%;
+                height: 450px;
+            }
             #legend {
                 width: 1200px;
                 margin: 10px auto 0;
@@ -471,7 +477,7 @@
     </head>
 
     <body>
-        <div id="container" style="width: 100%; height: 550px;"></div>
+        <div id="container"></div>
         <div id="legend">
             <div id="base_currency_toggles" class="column">
                 <button>All</button>
