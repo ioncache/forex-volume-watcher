@@ -1,3 +1,6 @@
 requires "AnyEvent";
+requires "AnyMQ";
+requires "Dancer::Plugin::WebSocket";
 requires "Plack";
-requires "Starman";
+requires "Twiggy";
+requires "Web::Hippie";

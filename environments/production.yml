@@ -1,0 +1,22 @@
+# configuration file for production environment
+
+# only log warning and error messsages
+log: "warning"
+
+# log message to a file in logs/
+# logger: "file"
+logger: "pipe"
+logger_format: "[%P] %L @%D> %i [%t] %m in %f l. %l"
+pipe:
+  command: "/oanda/system/sbin/cronolog /oanda/whitelabel-api/logs/%Y/%m/oanda-api_%Y_%m_%d.log -S /oanda/whitelabel-api/logs/oanda-api.log"
+
+
+# don't consider warnings critical
+warnings: 0
+
+# hide errors 
+show_errors: 0
+
+# cache route resolution for maximum performance
+route_cache: 1
+

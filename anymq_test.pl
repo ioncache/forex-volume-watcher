@@ -1,31 +1,24 @@
 #!/usr/bin/env perl
-use strict;
-use warnings;
-
-use AnyEvent;
-use AnyMQ;
 use Dancer;
-use Data::Dump qw<dump>;
+use AnyMQ;
 use Plack::Builder;
 
 my $bus = AnyMQ->new;
-my $topic = $bus->topic('rates');
+my $topic = $bus->topic('demo');
 
-our $w = AnyEvent->timer(after => 1, interval => 1, cb => sub {
-    $topic->publish({ msg => time });
-});
+get '/' => sub { template 'index' };
 
 # Web::Hippie routes
 get '/new_listener' => sub {
     request->env->{'hippie.listener'}->subscribe($topic);
 };
-
 get '/message' => sub {
     my $msg = request->env->{'hippie.message'};
     $topic->publish($msg);
 };
 
 builder {
+    mount '/' => dance;
     mount '/rates' => builder {
         enable '+Web::Hippie';
         enable '+Web::Hippie::Pipe', bus => $bus;
