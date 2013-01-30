@@ -4,7 +4,7 @@ use AnyMQ;
 use Plack::Builder;
 
 my $bus = AnyMQ->new;
-my $topic = $bus->topic('demo');
+my $topic = $bus->topic('rates');
 
 get '/' => sub { template 'index' };
 

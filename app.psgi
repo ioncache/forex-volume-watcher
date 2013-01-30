@@ -1,34 +1,71 @@
 #!/usr/bin/env perl
-use strict;
-use warnings;
+use Modern::Perl;
 
-use AnyEvent;
-use AnyMQ;
-use Dancer;
+# CPAN modules
 use Data::Dump qw<dump>;
-use Plack::Builder;
+use Data::Printer;
+use DateTime;
+use JSON;
+use Mojo::IOLoop;
+use Mojolicious::Lite;
+use Number::Format qw<:subs>;
+use Try::Tiny;
 
-my $bus = AnyMQ->new;
-my $topic = $bus->topic('rates');
+# OANDA modules
+use OANDA::Rates;
 
-our $w = AnyEvent->timer(after => 1, interval => 1, cb => sub {
-    $topic->publish({ msg => time });
+local $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+
+our $rates = OANDA::Rates->new( {host => 'house-rates.dev.oanda.com'} );
+
+# Write the process ID to the .pid file
+# (for the start/stop scripts)
+try {
+    my $fh = IO::File->new;
+    $fh->open('> /oanda/var/fxcup/run/fxcup.pid');
+    print $fh $$;
+    $fh->close;
+}
+catch {
+    die "Could not write the process ID to the .pid file";
+};
+
+my $j     = JSON->new;
+my $clients = {};
+
+our $event_loop = Mojo::IOLoop->recurring( 1 => sub {
+
+    for ( keys %{ $clients } ) {
+        $clients->{$_}->send(
+            $j->encode(
+                { timestamp => time, rates => $rates->current_rates }
+            )
+        );
+    }
 });
 
-# Web::Hippie routes
-get '/new_listener' => sub {
-    request->env->{'hippie.listener'}->subscribe($topic);
+get '/' => sub {
+    my $self = shift;
+    $self->render( text => "root" );
 };
 
-get '/message' => sub {
-    my $msg = request->env->{'hippie.message'};
-    $topic->publish($msg);
+# socket route for polling data for a particular league
+websocket '/rates' => sub {
+    my $self = shift;
+
+    my $id = sprintf "%s", $self->tx;
+
+    app->log->debug( sprintf( "Client connected: %s", $id ) );
+
+    $clients->{$id} = $self->tx;
+
+    $self->on(
+        finish => sub {
+            warn app->log->debug("Client disconnected: $id");
+            delete $clients->{$id};
+        }
+    );
 };
 
-builder {
-    mount '/rates' => builder {
-        enable '+Web::Hippie';
-        enable '+Web::Hippie::Pipe', bus => $bus;
-        dance;
-    };
-};
+app->secret('cheesdiptastesgoodandisactuallyhealthyforyoudespiteanyevidencetothecontrary');
+app->start;

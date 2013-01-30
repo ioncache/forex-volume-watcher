@@ -8,7 +8,7 @@ var socket;
 $(function() {
     // ws_path should be of the form ws://host/_hippie/ws
     //var ws_path = "ws:<% request.base.opaque %>_hippie/ws";
-    var ws_path = "ws:localhost:5000/rates/ws";
+    var ws_path = "ws:localhost:3000/rates/ws";
     socket = new WebSocket(ws_path);
     socket.onopen = function() {
         $('#connection-status').text("Connected");

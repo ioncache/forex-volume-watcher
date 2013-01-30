@@ -1,6 +1,6 @@
 PERL_MAJOR=5.14
-export PATH=/oanda/system/perls/$PERL_MAJOR/local/tools/bin:/oanda/system/perls/$PERL_MAJOR/bin:/oanda/system/bin:$PATH
-export PERL5LIB=/oanda/whitelabel-api/lib:/oanda/whitelabel-api/local/lib/perl5:/oanda/whitelabel-api/local/lib/perl5/i86pc-solaris:/oanda/system/perls/$PERL_MAJOR/local/tools/lib/perl5:/oanda/system/perls/$PERL_MAJOR/local/tools/lib/perl5/i86pc-solaris
-export LD_LIBRARY_PATH=/oanda/db2i9732/sqllib/lib32:/oanda/db2inst1/sqllib/lib32
 
-perl$PERL_MAJOR -S plackup -s Twiggy --port 3000 app.psgi
+export PATH=/oanda/system/perls/$PERL_MAJOR/local/tools/bin:/oanda/system/perls/$PERL_MAJOR/bin:/oanda/system/bin:$PATH
+export PERL5LIB=/oanda/system/perls/$PERL_MAJOR/local/tools/lib/perl5:/oanda/system/perls/$PERL_MAJOR/local/tools/lib/perl5/i86pc-solaris
+
+perl$PERL_MAJOR app.psgi daemon --listen "http://*:5000"
