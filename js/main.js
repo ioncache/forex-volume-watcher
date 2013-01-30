@@ -237,11 +237,19 @@ function on_canvas_mousemove(event) {
             INTERSECTED.material.color.setHex( 0xff0000 );
         }
         $(renderer.domElement).css("cursor", "pointer");
+        $("#column_hover")
+            .html($("#toggle_" + INTERSECTED.currency_pair).data("powertip"))
+            .css({
+                top: (event.pageY - 35) + "px",
+                left: (event.pageX + 15) + "px"
+            })
+            .fadeIn(100);
     }
     else {
         if ( INTERSECTED ) INTERSECTED.material.color.setHex( "0x" + currency_pairs[INTERSECTED.currency_pair].color );
         INTERSECTED = null;
         $(renderer.domElement).css("cursor", "auto");
+        $("#column_hover").fadeOut(100);
     }
 }
 
@@ -441,7 +449,11 @@ function websocket_connect(url) {
                     currency_pairs[pair_name].ask_min_scale = (currency_pairs[pair_name].ask_min - min_change) * scale_multiplier;
                 }
 
-                $("#toggle_" + pair_name).data("powertip", pair_name + " - " + currency_pairs[pair_name].timestamp + "<br /><br />Ask: " + currency_pairs[pair_name].ask + "<br />Min Ask: " + currency_pairs[pair_name].ask_min + "<br />Max Ask: " + currency_pairs[pair_name].ask_max + "<br /><br />Bid: " +  currency_pairs[pair_name].bid + "<br />Min Bid: " + currency_pairs[pair_name].bid_min + "<br />Max Bid: " + currency_pairs[pair_name].bid_max);
+                var utcSeconds = curency_pairs[pair_name].timestamp;
+                var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
+                d.setUTCSeconds(utcSeconds);
+
+                $("#toggle_" + pair_name).data("powertip", pair_name.replace("_", "/") + "<br /><br />" + d.toString() + "<br /><br />Ask: " + currency_pairs[pair_name].ask + "<br />Min Ask: " + currency_pairs[pair_name].ask_min + "<br />Max Ask: " + currency_pairs[pair_name].ask_max + "<br /><br />Bid: " +  currency_pairs[pair_name].bid + "<br />Min Bid: " + currency_pairs[pair_name].bid_min + "<br />Max Bid: " + currency_pairs[pair_name].bid_max);
             }
         }
     };
