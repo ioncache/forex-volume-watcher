@@ -412,22 +412,35 @@ function websocket_connect(url) {
                 currency_pairs[pair_name].timestamp = data.rates[pair].timestamp;
                 currency_pairs[pair_name].ask = data.rates[pair].ask;
                 currency_pairs[pair_name].bid = data.rates[pair].bid;
+
+                // bid change
                 if ( typeof(currency_pairs[pair_name].bid_max) == "undefined" || currency_pairs[pair_name].bid_max < data.rates[pair].bid ) {
                     currency_pairs[pair_name].bid_max = data.rates[pair].bid;
-                    currency_pairs[pair_name].bid_max_scale = currency_pairs[pair_name].bid_max * scale_multiplier;
+                    var max_change = data.rates[pair].bid - currency_pairs[pair_name].bid_max;
+                    currency_pairs[pair_name].bid_max_scale = (currency_pairs[pair_name].bid_max + max_change) * scale_multiplier;
+                    currency_pairs[pair_name].bid_min_scale = (currency_pairs[pair_name].bid_min + max_change) * scale_multiplier;
                 }
                 if ( typeof(currency_pairs[pair_name].bid_min) == "undefined" || currency_pairs[pair_name].bid_min > data.rates[pair].bid ) {
                     currency_pairs[pair_name].bid_min = data.rates[pair].bid;
-                    currency_pairs[pair_name].bid_min_scale = currency_pairs[pair_name].bid_min - (currency_pairs[pair_name].bid_min * scale_multiplier - currency_pairs[pair_name].bid_min);
+                    var min_change = currency_pairs[pair_name].bid_min - data.rates[pair].bid;
+                    currency_pairs[pair_name].bid_max_scale = (currency_pairs[pair_name].bid_max - min_change) * scale_multiplier;
+                    currency_pairs[pair_name].bid_min_scale = (currency_pairs[pair_name].bid_min - min_change) * scale_multiplier;
                 }
+
+                // ask change
                 if ( typeof(currency_pairs[pair_name].ask_max) == "undefined" || currency_pairs[pair_name].ask_max < data.rates[pair].ask ) {
-                    currency_pairs[pair_name].ask_max = data.rates[pair].ask
-                    currency_pairs[pair_name].ask_max_scale = currency_pairs[pair_name].ask_max * scale_multiplier;
+                    currency_pairs[pair_name].ask_max = data.rates[pair].ask;
+                    var max_change = data.rates[pair].ask - currency_pairs[pair_name].ask_max;
+                    currency_pairs[pair_name].ask_max_scale = (currency_pairs[pair_name].ask_max + max_change) * scale_multiplier;
+                    currency_pairs[pair_name].ask_min_scale = (currency_pairs[pair_name].ask_min + max_change) * scale_multiplier;
                 }
                 if ( typeof(currency_pairs[pair_name].ask_min) == "undefined" || currency_pairs[pair_name].ask_min > data.rates[pair].ask ) {
                     currency_pairs[pair_name].ask_min = data.rates[pair].ask;
-                    currency_pairs[pair_name].ask_min_scale = currency_pairs[pair_name].ask_min - (currency_pairs[pair_name].ask_min * scale_multiplier - currency_pairs[pair_name].ask_min);
+                    var min_change = currency_pairs[pair_name].ask_min - data.rates[pair].ask;
+                    currency_pairs[pair_name].ask_max_scale = (currency_pairs[pair_name].ask_max - min_change) * scale_multiplier;
+                    currency_pairs[pair_name].ask_min_scale = (currency_pairs[pair_name].ask_min - min_change) * scale_multiplier;
                 }
+
                 $("#toggle_" + pair_name).data("powertip", pair_name + " - " + currency_pairs[pair_name].timestamp + "<br /><br />Ask: " + currency_pairs[pair_name].ask + "<br />Min Ask: " + currency_pairs[pair_name].ask_min + "<br />Max Ask: " + currency_pairs[pair_name].ask_max + "<br /><br />Bid: " +  currency_pairs[pair_name].bid + "<br />Min Bid: " + currency_pairs[pair_name].bid_min + "<br />Max Bid: " + currency_pairs[pair_name].bid_max);
             }
         }
