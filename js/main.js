@@ -243,7 +243,7 @@ function on_canvas_mousemove(event) {
                 top: (event.pageY - 35) + "px",
                 left: (event.pageX + 15) + "px"
             })
-            .fadeIn(100);
+            .fadeIn(300);
     }
     else {
         if ( INTERSECTED ) INTERSECTED.material.color.setHex( "0x" + currency_pairs[INTERSECTED.currency_pair].color );
@@ -449,7 +449,7 @@ function websocket_connect(url) {
                     currency_pairs[pair_name].ask_min_scale = (currency_pairs[pair_name].ask_min - min_change) * scale_multiplier;
                 }
 
-                var utcSeconds = curency_pairs[pair_name].timestamp;
+                var utcSeconds = currency_pairs[pair_name].timestamp;
                 var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
                 d.setUTCSeconds(utcSeconds);
 
